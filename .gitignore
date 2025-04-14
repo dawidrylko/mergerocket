@@ -1,0 +1,8 @@
+# Dependency directories
+node_modules/
+
+# Coverage reports
+coverage/
+
+# macOS system files
+.DS_Store
