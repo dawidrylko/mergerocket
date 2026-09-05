@@ -9,7 +9,7 @@ Every file is wrapped in a start and an end marker carrying its path, so the mod
 
 ## Requirements
 
-Node.js 24.12.0 or newer. That is the version `.nvmrc` pins, and CI runs the suite on Node.js 24 and 26.
+Node.js 26.0.0 or newer. `.nvmrc` pins 26.8.1, and CI runs the suite on Node.js 26.
 
 ## Install
 
