@@ -16,7 +16,7 @@ All notable changes to mergerocket are recorded here. The format follows [Keep a
 
 ### Changed
 
-- Rewrote the README around a quickstart and a table of options. It now documents the output format, the placeholder left in place of a binary file, and how much of `.gitignore` is actually supported.
+- Rewrote the README around a quickstart and a table of options. It now documents the output format, the placeholder left in place of a binary file, how much of `.gitignore` is actually supported, and a known limitations section covering symlink cycles, the memory cost of `--attach-summary` and the binary heuristic.
 - Narrowed the npm keywords and the package description to what the tool does.
 - Raised ava to 8 and c8 to 12. The old versions pulled in 27 high and critical advisories through `@vercel/nft`, which failed the audit step and would have blocked every release. The suite passes unchanged on the new majors.
 

@@ -25,7 +25,7 @@ The equivalents are `yarn global add mergerocket` and `pnpm add -g mergerocket`.
 mergerocket
 ```
 
-That merges the current directory into `merged_<epoch>.txt`, where the suffix is the epoch time in milliseconds. Hidden files are skipped, `.gitignore` is honoured, and the images and archives in the default blacklist are dropped.
+That merges the current directory into `merged_<epoch>.txt`, where the suffix is the epoch time in milliseconds. Hidden files are skipped, `.gitignore` is honoured, and the file types in the default blacklist are dropped.
 
 ## Options
 
@@ -115,6 +115,16 @@ Merged file count by type:
 ```
 
 The summary is wrapped with the same marker templates, so `--start` and `--end` apply to it too.
+
+## Known limitations
+
+Symlinked directories are followed, and nothing detects a cycle. A link pointing back at an ancestor makes the walk revisit the same files until the path outgrows the filesystem limit, so the output inflates instead of failing. Point `--dir` at a tree without loops.
+
+`--attach-summary` reads the finished output back into memory to put the summary in front of it. On a large tree that roughly doubles peak memory.
+
+Binary detection looks for a null byte in the first 8000 bytes. A binary format that keeps those bytes free of nulls is merged as if it were text.
+
+The `.gitignore` reader handles literal names, directories and wildcards, but not negation.
 
 ## Development
 
