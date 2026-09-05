@@ -1,191 +1,165 @@
-# 🚀 Mergerocket
+# mergerocket
 
-**Mergerocket** is a fast CLI tool for merging text file contents from a given directory. It scans directories recursively, concatenates the contents of text files while ignoring binary files (and optionally files excluded by .gitignore), and inserts customizable start and end markers around each file's content. With additional options like keeping hidden files and appending a detailed summary, **Mergerocket** is perfect for developers and testers who need to aggregate file contents quickly and efficiently.
+mergerocket is a command line tool that walks a directory, reads every text file it finds and writes them all into one file. It exists to get a whole tree into a single LLM prompt without copying files by hand.
 
+[![npm version](https://img.shields.io/npm/v/mergerocket.svg)](https://www.npmjs.com/package/mergerocket)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/npm/v/mergerocket.svg)](https://www.npmjs.com/package/mergerocket)
 
-## ✨ Features
+Every file is wrapped in a start and an end marker carrying its path, so the model can tell where one file stops and the next begins. Binary files and anything `.gitignore` excludes are left out by default. An optional summary at the top reports what was merged and what was skipped.
 
-- **Fast File Merging:** Quickly merge text file contents from a directory while skipping binary files.
-- **Customizable Markers:** Define your own start and end markers (with a `{file}` placeholder) to separate contents from different files.
-- **Selective Merging:** Exclude files based on extension (e.g. `.png`, `.jpg`, etc.) via a configurable blacklist.
-- **Gitignore Integration:** Optionally respect a directory's `.gitignore` file to avoid merging ignored files.
-- **Hidden Files Option:** Toggle inclusion of hidden files with a simple flag.
-- **Comprehensive Summary Report:** Generate a summary with details such as execution duration, file counts, and file type statistics.
-- **Flexible Input/Output:** Specify the base directory to search and the output file name for the merged result.
+## Requirements
 
-## 📥 Installation
+Node.js 24.12.0 or newer. That is the version `.nvmrc` pins, and CI runs the suite on Node.js 24 and 26.
 
-You can install **Mergerocket** using your favorite package manager: npm, Yarn, or pnpm.
-
-### Global Installation
-
-- **Using npm:**
-
-  ```bash
-  npm install -g mergerocket
-  ```
-
-- **Using Yarn:**
-
-  ```bash
-  yarn global add mergerocket
-  ```
-
-- **Using pnpm:**
-
-  ```bash
-  pnpm install -g mergerocket
-  ```
-
-### Local Installation (Development Dependency)
-
-- **Using npm:**
-
-  ```bash
-  npm install --save-dev mergerocket
-  ```
-
-- **Using Yarn:**
-
-  ```bash
-  yarn add --dev mergerocket
-  ```
-
-- **Using pnpm:**
-
-  ```bash
-  pnpm add -D mergerocket
-  ```
-
-## 💻 Usage
-
-Run **mergerocket** from the command line with the following syntax:
+## Install
 
 ```bash
-mergerocket [OPTIONS]
+npm install -g mergerocket
 ```
 
-By default, if no additional parameters are supplied, it merges the contents of text files from the current directory into a file named similar to `merged_<timestamp>.txt`.
+The equivalents are `yarn global add mergerocket` and `pnpm add -g mergerocket`. To keep it to one project, install it as a dev dependency with `npm install --save-dev mergerocket` and call it from a package script.
 
-### Command-line Arguments
-
-- **`--dir`, `-d`**:  
-  Specify the base directory from which to start merging files.  
-  _Default:_ Current directory (`.`).
-
-- **`--out`, `-o`**:  
-  Define the output file where merged content will be saved.  
-  _Default:_ `merged_<timestamp>.txt`.
-
-- **`--blacklist`**:  
-  Provide a comma-separated list of file extensions to ignore (e.g., `.png,.jpg,.zip,...`).  
-  _Default:_ `.png,.jpg,.jpeg,.gif,.bmp,.ico,.zip,.gz,.tar,.rar,.exe`.
-
-- **`--start`**:  
-  Customize the start marker that will be inserted before each file's content. Use the `{file}` placeholder for dynamic file path info.  
-  _Default:_ `--- START: {file} ---`.
-
-- **`--end`**:  
-  Customize the end marker that will be appended after each file's content. Use the `{file}` placeholder for dynamic file path info.  
-  _Default:_ `--- END: {file} ---`.
-
-- **`--keep-hidden`**:  
-  Include hidden files (files beginning with a dot) in the merge process.
-
-- **`--ignore-gitignore`**:  
-  Ignore the `.gitignore` file (if present) so that files excluded by Git are merged anyway.
-
-- **`--attach-summary`**:  
-  Append a summary report to the merged file which includes execution date, duration, and counts of processed files, text files merged, binary files skipped, and more.
-
-### Examples
-
-#### 1. Basic Merge from the Current Directory
-
-Merge all eligible text files in the current directory using default settings:
+## Quickstart
 
 ```bash
 mergerocket
 ```
 
-#### 2. Specify Source Directory (--dir, -d)
+That merges the current directory into `merged_<epoch>.txt`, where the suffix is the epoch time in milliseconds. Hidden files are skipped, `.gitignore` is honoured, and the file types in the default blacklist are dropped.
 
-Merge files from the `src` directory:
+## Options
 
-```bash
-mergerocket --dir src
-# or using the short option:
-mergerocket -d src
-```
+| Flag | Value | Default | Description |
+| --- | --- | --- | --- |
+| `-d`, `--dir` | directory | `.` | Directory to walk, recursively. |
+| `-o`, `--out` | file path | `merged_<epoch>.txt` | Where the merged file is written. Missing parent directories are created. |
+| `--blacklist` | extensions, comma separated | see below | Extensions dropped from the merge entirely. |
+| `--start` | marker template | `--- START: {file} ---` | Written before each file. `{file}` becomes the path. |
+| `--end` | marker template | `--- END: {file} ---` | Written after each file. `{file}` becomes the path. |
+| `--keep-hidden` | flag | off | Include files and directories whose name begins with a dot. |
+| `--ignore-gitignore` | flag | off | Disregard `.gitignore` and merge the files it excludes. |
+| `--attach-summary` | flag | off | Prepend a summary block to the output file. |
 
-#### 3. Specify Output File (--out, -o)
+The default blacklist is `.png,.jpg,.jpeg,.gif,.bmp,.ico,.zip,.gz,.tar,.rar,.exe`. Passing `--blacklist` replaces that list rather than adding to it.
 
-Save the merged content to a specific file:
+Matching reads the final extension only, the one `path.extname` returns. `.test.js` therefore never matches anything, because the extension of `app.test.js` is `.js`. Filter those through `.gitignore` instead.
 
-```bash
-mergerocket --out merged_output.txt
-# or using the short option:
-mergerocket -o merged_output.txt
-```
+The `.gitignore` support covers the common cases: a literal name, a directory, and a wildcard such as `*.log`. It does not implement negation, so a `!keep.log` line has no effect and the file stays excluded.
 
-#### 4. Customize File Extension Blacklist (--blacklist)
+## Examples
 
-Add additional file extensions to skip during merging:
-
-```bash
-mergerocket --blacklist ".png,.jpg,.pdf,.docx,.mp3,.mp4"
-```
-
-#### 5. Customize Markers (--start, --end)
-
-Set custom start and end markers for each file:
+### Merge one subdirectory into a named file
 
 ```bash
-mergerocket --start "/** BEGIN FILE: {file} **/" --end "/** END FILE: {file} **/"
+mergerocket --dir src --out bundle.txt
 ```
 
-#### 6. Include Hidden Files (--keep-hidden)
-
-Include files that start with a dot (hidden files):
+### Include dotfiles and the files git ignores
 
 ```bash
-mergerocket --keep-hidden
+mergerocket --keep-hidden --ignore-gitignore
 ```
 
-#### 7. Ignore Gitignore Rules (--ignore-gitignore)
-
-Process all files even if they are excluded in .gitignore:
+### Markers that read as comments in the target language
 
 ```bash
-mergerocket --ignore-gitignore
+mergerocket --start "// BEGIN {file}" --end "// END {file}"
 ```
 
-#### 8. Add Summary Report (--attach-summary)
-
-Add a comprehensive summary at the beginning of the output file:
+### Keep images but drop vector art and lockfiles
 
 ```bash
-mergerocket --attach-summary
+mergerocket --blacklist ".svg,.lock"
 ```
 
-#### 9. Combine Multiple Options
-
-You can combine multiple options for a more tailored experience:
+### Everything at once, with a summary
 
 ```bash
-mergerocket --dir src --out code_bundle.txt --keep-hidden --attach-summary
+mergerocket -d src -o context.txt --keep-hidden --attach-summary
 ```
+
+## Output
+
+The result is one plain text file. Each merged file contributes a marker, its contents, and a closing marker:
+
+```
+--- START: one.txt ---
+alpha
+
+--- END: one.txt ---
+
+--- START: sub/two.md ---
+beta
+
+--- END: sub/two.md ---
+```
+
+Each marker carries the `--dir` value joined to the path beneath it. `--dir src` therefore yields `src/one.txt`, and an absolute `--dir` yields absolute paths. The default `.` collapses to a plain relative path, which is what the example above shows.
+
+A file carrying a null byte in its first 8000 bytes counts as binary: it still gets its markers, but the body is replaced with `[SKIP] Binary file: <path>`. A file that cannot be read gets `[SKIP] Failed to read file: <path>`. Blacklisted extensions produce no markers at all, and the output file leaves itself out.
+
+With `--attach-summary`, a block goes in front of everything else:
+
+```
+--- START: Merged File Summary ---
+Execution Date: 9/5/2026, 11:52:50 PM
+Duration: 1 ms
+Files processed for merging: 2
+Text files merged: 2
+Binary files skipped: 0
+Files failed to read: 0
+Merged file count by type:
+  .txt: 1
+  .md: 1
+--- END: Merged File Summary ---
+```
+
+The summary is wrapped with the same marker templates, so `--start` and `--end` apply to it too.
+
+## Known limitations
+
+Symlinked directories are followed, and nothing detects a cycle. A link pointing back at an ancestor makes the walk revisit the same files until the path outgrows the filesystem limit, so the output inflates instead of failing. Point `--dir` at a tree without loops.
+
+`--attach-summary` reads the finished output back into memory to put the summary in front of it. On a large tree that roughly doubles peak memory.
+
+Binary detection looks for a null byte in the first 8000 bytes. A binary format that keeps those bytes free of nulls is merged as if it were text.
+
+The `.gitignore` reader handles literal names, directories and wildcards, but not negation.
+
+## Development
 
 ```bash
-mergerocket -d src/frontend -o frontend_bundle.txt --blacklist ".test.js,.spec.js,.d.ts" --start "// BEGIN {file}" --end "// END {file}"
+pnpm install
+pnpm test
 ```
 
-## 📜 License
+The suite is [ava](https://github.com/avajs/ava): 22 tests covering the merge behaviour and the exported helpers. `pnpm coverage` runs the same suite under c8.
 
-This project is licensed under the MIT License – see the [LICENSE](./LICENSE) file for details.
+## Releasing
 
-## 👨‍💻 Author
+Releases run from a pushed tag. `.github/workflows/release.yml` checks the tag against `version` in `package.json`, audits the dependencies, runs the tests, packs the tarball, publishes to npm and opens a GitHub Release.
 
-Developed and maintained by [Dawid Ryłko](https://dawidrylko.com).
+```bash
+npm version patch
+git push --follow-tags
+```
+
+Use `minor` or `major` in place of `patch` as the change requires. `npm version` writes the new version, commits it and creates the tag.
+
+The first release is the exception. `package.json` already reads 0.1.0, so tag the existing commit rather than letting `npm version` invent 0.1.1:
+
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+Publishing uses npm trusted publishing over OIDC, so there is no `NPM_TOKEN` to store or rotate. It needs one setup step on npmjs.com: in the package settings, add a trusted publisher for `dawidrylko/mergerocket` with the workflow file `release.yml`.
+
+Past releases are listed in [CHANGELOG.md](./CHANGELOG.md).
+
+## License
+
+MIT. See [LICENSE](./LICENSE).
+
+## Author
+
+[Dawid Ryłko](https://dawidrylko.com)

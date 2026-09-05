@@ -1,0 +1,50 @@
+name: Bug report
+description: Something does not work as documented.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: The exact mergerocket command you ran.
+      render: bash
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: Console output, including any error. A trimmed excerpt of the merged file helps when the problem is in its contents.
+      render: text
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: mergerocket version
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version
+      description: Output of node --version.
+      placeholder: v22.12.0
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      description: Name the container image if the run was inside one.
+      placeholder: macOS 15.6
+    validations:
+      required: true
