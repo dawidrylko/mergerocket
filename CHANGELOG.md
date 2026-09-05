@@ -9,9 +9,9 @@ All notable changes to mergerocket are recorded here. The format follows [Keep a
 ### Added
 
 - Release workflow: a pushed `vX.Y.Z` tag verifies the version against `package.json`, audits, runs the tests, publishes to npm over OIDC trusted publishing and opens a GitHub Release.
-- CI workflow: the test suite runs on Node.js 22 and 24 for every pull request and every push to master. A separate audit job runs on every push to master and once a week.
+- CI workflow: the test suite runs on Node.js 26 for every pull request and every push to master. A separate audit job runs on every push to master and once a week.
 - A `files` field. The published tarball now carries `main.js`, `mergerocket.js`, `CHANGELOG.md` and the metadata npm always includes, and nothing else. It previously shipped the whole test suite, `ava.config.js` and `.nvmrc`.
-- Declared a Node.js 24.12.0 floor through `engines`, and `publishConfig.access` so the publish stays explicit rather than relying on the registry default.
+- Declared a Node.js 26.0.0 floor through `engines`, and `publishConfig.access` so the publish stays explicit rather than relying on the registry default.
 - This changelog, plus issue templates for bug reports and feature requests.
 
 ### Changed
