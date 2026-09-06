@@ -4,6 +4,11 @@ All notable changes to mergerocket are recorded here. The format follows [Keep a
 
 ## [Unreleased]
 
+### Fixed
+
+- A symlinked directory pointing back at an ancestor no longer sends the walk round the same files repeatedly. Each real directory is now walked once, so a link to an already visited directory ends the descent. A 6 byte file behind a loop previously produced 15.3 MB of output.
+- The output file is now recognised as itself when the walk reaches it through a symlink, and is left out of the merge. It was compared with `path.resolve`, which normalises a path but never follows links, so the merge appended the output to its own content once per pass. With a loop in the tree that growth was exponential.
+
 ## [0.1.0] - 2026-09-05
 
 ### Added

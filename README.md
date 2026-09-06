@@ -96,6 +96,8 @@ beta
 
 Each marker carries the `--dir` value joined to the path beneath it. `--dir src` therefore yields `src/one.txt`, and an absolute `--dir` yields absolute paths. The default `.` collapses to a plain relative path, which is what the example above shows.
 
+Symlinked directories are followed, and each real directory is walked once. A link pointing back at an ancestor ends the descent rather than repeating it, and a directory reachable by two links contributes its files a single time. The output file is recognised as itself through a link, so it never lands in its own content.
+
 A file carrying a null byte in its first 8000 bytes counts as binary: it still gets its markers, but the body is replaced with `[SKIP] Binary file: <path>`. A file that cannot be read gets `[SKIP] Failed to read file: <path>`. Blacklisted extensions produce no markers at all, and the output file leaves itself out.
 
 With `--attach-summary`, a block goes in front of everything else:
@@ -117,8 +119,6 @@ Merged file count by type:
 The summary is wrapped with the same marker templates, so `--start` and `--end` apply to it too.
 
 ## Known limitations
-
-Symlinked directories are followed, and nothing detects a cycle. A link pointing back at an ancestor makes the walk revisit the same files until the path outgrows the filesystem limit, so the output inflates instead of failing. Point `--dir` at a tree without loops.
 
 `--attach-summary` reads the finished output back into memory to put the summary in front of it. On a large tree that roughly doubles peak memory.
 
