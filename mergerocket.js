@@ -51,6 +51,7 @@ export const DEFAULT_CONFIG = {
  * @property {boolean} [ignoreGitignore=false] - Whether to ignore .gitignore rules
  * @property {string[]} [gitignorePatterns=[]] - Patterns from .gitignore file
  * @property {string} [baseDir] - Base directory for resolving relative paths
+ * @property {Set<string>} [visited] - Internal only. Real paths already walked, used to break symlink cycles. Callers must not pass or reuse this between top level calls.
  */
 
 /**
@@ -119,6 +120,20 @@ const generateSummaryText = ({
   
   summaryLines.push(endMarker.replace("{file}", summaryHeader));
   return summaryLines.join("\n");
+};
+
+/**
+ * Resolves a path to the real file it names, following symlinks.
+ * Falls back to a normalized absolute path when the target does not exist yet.
+ * @param {string} filePath - Path to resolve
+ * @returns {string} - Real path, or the normalized absolute path
+ */
+const resolveRealPath = (filePath) => {
+  try {
+    return fs.realpathSync(filePath);
+  } catch {
+    return path.resolve(filePath);
+  }
 };
 
 /**
@@ -260,6 +275,19 @@ export const isIgnoredByGitignore = (filePath, baseDir, gitignorePatterns) => {
 export const walkDirectory = (dirPath, callback, options = {}) => {
   const { keepHidden = false, ignoreGitignore = false, gitignorePatterns = [] } = options;
   const baseDir = options.baseDir || dirPath;
+  const visited = options.visited || new Set();
+
+  let realDirPath;
+  try {
+    realDirPath = fs.realpathSync(dirPath);
+  } catch {
+    return;
+  }
+
+  if (visited.has(realDirPath)) {
+    return;
+  }
+  visited.add(realDirPath);
 
   try {
     fs.readdirSync(dirPath).forEach((file) => {
@@ -278,7 +306,7 @@ export const walkDirectory = (dirPath, callback, options = {}) => {
         }
 
         if (stat.isDirectory()) {
-          walkDirectory(fullPath, callback, { ...options, baseDir });
+          walkDirectory(fullPath, callback, { ...options, baseDir, visited });
         } else {
           callback(fullPath);
         }
@@ -359,7 +387,13 @@ export const mergeFiles = (options = {}) => {
     attachSummary = false,
   } = options;
 
-  if (fs.existsSync(out)) {
+  let existingOut = null;
+  try {
+    existingOut = fs.lstatSync(out);
+  } catch {
+    existingOut = null;
+  }
+  if (existingOut) {
     fs.unlinkSync(out);
   }
 
@@ -369,6 +403,11 @@ export const mergeFiles = (options = {}) => {
   }
 
   const gitignorePatterns = ignoreGitignore ? [] : readGitignorePatterns(dir);
+
+  const outRealPath = path.join(
+    resolveRealPath(path.dirname(out)),
+    path.basename(out)
+  );
 
   let mergedCount = 0;
   let textFileCount = 0;
@@ -382,7 +421,7 @@ export const mergeFiles = (options = {}) => {
   walkDirectory(
     dir,
     (filePath) => {
-      if (path.resolve(filePath) === path.resolve(out)) {
+      if (resolveRealPath(filePath) === outRealPath) {
         return;
       }
       

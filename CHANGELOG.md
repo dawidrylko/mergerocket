@@ -4,6 +4,12 @@ All notable changes to mergerocket are recorded here. The format follows [Keep a
 
 ## [Unreleased]
 
+### Fixed
+
+- A symlinked directory pointing back at an ancestor no longer sends the walk round the same files repeatedly. Each real directory is now walked once, so a link to an already visited directory ends the descent. Previously the walk only stopped when the path outgrew the filesystem limit, around 33 levels deep.
+- The output file is now recognised as itself when the walk reaches it through a symlink, and is left out of the merge. It was compared with `path.resolve`, which normalises a path but never follows links. Where a loop also exposed the output file, the merge appended the output to its own content once per level: a single 6 byte input produced 15.3 MB that way, and a run over this repository's own test fixtures reached 922 MB.
+- A dangling symlink at `--out` is now removed before the merge starts. `fs.existsSync` follows symlinks and reports false for a broken one, so the link survived, the first write followed it, and the output was created wherever it pointed. With the link aimed inside `--dir`, that wrote a file into the source tree and then merged it into itself.
+
 ## [0.1.0] - 2026-09-05
 
 ### Added
