@@ -123,6 +123,36 @@ const mergedRealPaths = (outFile) =>
     )
     .map((filePath) => fs.realpathSync(filePath));
 
+test.serial("mergeFiles replaces a dangling symlink at the output path", (t) => {
+  const innerDir = path.join(testDataDir, "inner");
+  fs.mkdirSync(innerDir, { recursive: true });
+  const outFile = path.join(testDataDir, "out.txt");
+  fs.symlinkSync(path.join("inner", "self.txt"), outFile);
+
+  mergeFiles({ dir: testDataDir, out: outFile, ignoreGitignore: true });
+
+  t.false(
+    fs.existsSync(path.join(innerDir, "self.txt")),
+    "Writing the output must not create a file inside the source tree"
+  );
+  t.false(
+    fs.lstatSync(outFile).isSymbolicLink(),
+    "The dangling symlink should be replaced by a real output file"
+  );
+
+  const merged = mergedRealPaths(outFile);
+  const counts = new Map();
+  merged.forEach((filePath) => {
+    counts.set(filePath, (counts.get(filePath) || 0) + 1);
+  });
+
+  t.deepEqual(
+    [...counts.entries()].filter(([, count]) => count > 1),
+    [],
+    "No file should be merged more than once"
+  );
+});
+
 test.serial("mergeFiles merges each real file once when the tree loops", (t) => {
   const outFile = path.join(outputDir, "merged.txt");
   fs.symlinkSync(testDataDir, path.join(testDataDir, "nested", "loop"), "dir");

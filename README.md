@@ -96,7 +96,7 @@ beta
 
 Each marker carries the `--dir` value joined to the path beneath it. `--dir src` therefore yields `src/one.txt`, and an absolute `--dir` yields absolute paths. The default `.` collapses to a plain relative path, which is what the example above shows.
 
-Symlinked directories are followed, and each real directory is walked once. A link pointing back at an ancestor ends the descent rather than repeating it, and a directory reachable by two links contributes its files a single time. The output file is recognised as itself through a link, so it never lands in its own content.
+Symlinked directories are followed, and each real directory is walked once. A link pointing back at an ancestor ends the descent rather than repeating it, and a directory reachable by two links contributes its files a single time. The output file is recognised as itself when the walk reaches it through a symlink, so it never lands in its own content.
 
 A file carrying a null byte in its first 8000 bytes counts as binary: it still gets its markers, but the body is replaced with `[SKIP] Binary file: <path>`. A file that cannot be read gets `[SKIP] Failed to read file: <path>`. Blacklisted extensions produce no markers at all, and the output file leaves itself out.
 
@@ -126,6 +126,8 @@ Binary detection looks for a null byte in the first 8000 bytes. A binary format 
 
 The `.gitignore` reader handles literal names, directories and wildcards, but not negation.
 
+Files are identified by their real path, which resolves symlinks but not hard links. Two hard links to one file read as two files, so that content is merged twice, and a hard link to the output file is not recognised as the output.
+
 ## Development
 
 ```bash
@@ -133,7 +135,7 @@ pnpm install
 pnpm test
 ```
 
-The suite is [ava](https://github.com/avajs/ava): 22 tests covering the merge behaviour and the exported helpers. `pnpm coverage` runs the same suite under c8.
+The suite is [ava](https://github.com/avajs/ava): 27 tests covering the merge behaviour and the exported helpers. `pnpm coverage` runs the same suite under c8.
 
 ## Releasing
 

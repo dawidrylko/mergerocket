@@ -51,7 +51,7 @@ export const DEFAULT_CONFIG = {
  * @property {boolean} [ignoreGitignore=false] - Whether to ignore .gitignore rules
  * @property {string[]} [gitignorePatterns=[]] - Patterns from .gitignore file
  * @property {string} [baseDir] - Base directory for resolving relative paths
- * @property {Set<string>} [visited] - Real paths already walked, used internally to break symlink cycles
+ * @property {Set<string>} [visited] - Internal only. Real paths already walked, used to break symlink cycles. Callers must not pass or reuse this between top level calls.
  */
 
 /**
@@ -387,7 +387,13 @@ export const mergeFiles = (options = {}) => {
     attachSummary = false,
   } = options;
 
-  if (fs.existsSync(out)) {
+  let existingOut = null;
+  try {
+    existingOut = fs.lstatSync(out);
+  } catch {
+    existingOut = null;
+  }
+  if (existingOut) {
     fs.unlinkSync(out);
   }
 
