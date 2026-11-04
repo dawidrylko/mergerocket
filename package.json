@@ -47,7 +47,7 @@
     "node": ">=26.0.0"
   },
   "dependencies": {
-    "yargs": "^17.7.2"
+    "yargs": "^18.2.0"
   },
   "devDependencies": {
     "ava": "^8.0.1",
